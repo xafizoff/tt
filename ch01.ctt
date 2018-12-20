@@ -1,0 +1,22 @@
+module ch01 where
+
+data bool = true | false
+data nat = z | s (n : nat)
+
+Family (A: U): U = A -> U
+
+const (A B: U) : Family A = \(a : A) -> B
+
+data prod (A B : U) = pair (a : A) (b : B)
+
+pr1 (A B : U) : prod A B -> A = split pair a b -> a
+pr2 (A B : U) : prod A B -> B = split pair a b -> b
+
+--rec_AxB: recursor of product type
+uncurry (A B C : U) : (A -> B -> C) -> ((prod A B) -> C) =
+  \(g : A -> B -> C) -> \(p : prod A B) -> g (pr1 A B p) (pr2 A B p)
+
+pr1' (A B : U) : prod A B -> A = uncurry A B A (\(a : A) -> \(b : B) -> a)
+pr2' (A B : U) : prod A B -> B = uncurry A B B (\(a : A) -> \(b : B) -> b)
+
+
