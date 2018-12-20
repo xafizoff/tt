@@ -20,3 +20,27 @@ pr1' (A B : U) : prod A B -> A = uncurry A B A (\(a : A) -> \(b : B) -> a)
 pr2' (A B : U) : prod A B -> B = uncurry A B B (\(a : A) -> \(b : B) -> b)
 
 
+-----------------
+-- Functors
+-----------------
+
+Path (A : U) (a b : A) : U = PathP (<_> A) a b
+
+o (A B C : U) (f : A -> B) (g : B -> C) : A -> C =
+  \(x : A) -> g (f x)
+
+idfun (A : U) : A -> A = \(a : A) -> a
+
+-- g o h = k o f   g : A -> B, h : B -> C, k : A -> B', f : B' -> C
+-- fmap h : F B -> F C, fmap k : F A -> F B', $map g : F A -> F B, $map f : F B' -> F C
+free1 (A B B' C : U) (g : A -> B) (h : B -> C) (k : A -> B') (f : B' -> C) (F : U -> U) (fmap : (C1 C2 : U) -> (C1 -> C2) -> (F C1 -> F C2))
+      (p : Path (A -> C) (o A B C g h) (o A B' C k f)) :
+      (nmap : (C1 C2 : U) -> (C1 -> C2) -> (F C1 -> F C2)) * (Path (F A -> F C) (o (F A) (F B) (F C) (nmap A B g) (fmap B C h)) (o (F A) (F B') (F C) (fmap A B' k) (nmap B' C f)))
+      = undefined
+-- forall a : A. fmap idA x = idFA x => fmap (f o g) = fmap f o fmap g
+free (A B C : U) (F : U -> U) (fmap : (C1 C2 : U) -> (C1 -> C2) -> (F C1 -> F C2))
+     (p : Path (F A -> F A) (fmap A A (idfun A)) (idfun (F A))) :
+     ((f : A -> B) -> (g : B -> C) -> Path (F A -> F C) (fmap A C (o A B C f g)) (o (F A) (F B) (F C) (fmap A B f) (fmap B C g)))
+     = undefined
+
+-----------------
