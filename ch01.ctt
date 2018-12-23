@@ -1,8 +1,5 @@
 module ch01 where
 
-Path (A : U) (a b : A) : U = PathP (<_> A) a b
-refl (A : U) (a : A) : Path A a a = <i> a
-
 -- Exercise 1.1. Given functions f : A → B and g : B → C,
 -- define their composite g ◦ f : A → C.
 -- Show that we have h ◦ ( g ◦ f ) ≡ ( h ◦ g ) ◦ f .
@@ -11,6 +8,18 @@ o (A B C : U) (g : B -> C) (f : A -> B) (x : A) : C = g (f x)
 oassoc (A B C D : U) (h : C -> D) (g : B -> C) (f : A -> B) :
        -- A -> D = o A C D h (o A B C g f)
        -- A -> D = o A B D (o B C D h g) f
-       Path (A -> D) (o A C D h (o A B C g f)) (o A B D (o B C D h g) f)
-       = refl (A -> D) (o A C D h (o A B C g f))
+       PathP (<_> A -> D) (o A C D h (o A B C g f)) (o A B D (o B C D h g) f)
+       = <i> (o A C D h (o A B C g f))
 
+-- Exercise 1.2. Derive the recursion principle for products rec A × B
+-- using only the projections, and verify that the definitional equalities
+-- are valid. Do the same for Σ-types.
+
+recsigma (A C : U) (B : A -> U) (g : (x : A) -> B x -> C) (p : (x : A) * B x) : C = g p.1 p.2
+
+recsigmabeta (A C : U) (B : A -> U) (g : (x : A) -> B x -> C)
+             (p : (x : A) * B x) : PathP (<_> C) (recsigma A C B g p) (g p.1 p.2) = <i> g p.1 p.2
+
+-- Exercise 1.3. Derive the induction principle for products ind A × B , using only the projections and
+-- the propositional uniqueness principle uniq A × B . Verify that the definitional equalities are valid.
+-- Generalize uniq A × B to Σ-types, and do the same for Σ-types.
