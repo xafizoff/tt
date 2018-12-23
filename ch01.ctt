@@ -18,8 +18,53 @@ oassoc (A B C D : U) (h : C -> D) (g : B -> C) (f : A -> B) :
 recsigma (A C : U) (B : A -> U) (g : (x : A) -> B x -> C) (p : (x : A) * B x) : C = g p.1 p.2
 
 recsigmabeta (A C : U) (B : A -> U) (g : (x : A) -> B x -> C)
-             (p : (x : A) * B x) : PathP (<_> C) (recsigma A C B g p) (g p.1 p.2) = <i> g p.1 p.2
+           (p : (x : A) * B x) : PathP (<_> C) (recsigma A C B g p) (g p.1 p.2) = <i> g p.1 p.2
 
--- Exercise 1.3. Derive the induction principle for products ind A × B , using only the projections and
--- the propositional uniqueness principle uniq A × B . Verify that the definitional equalities are valid.
+-- Exercise 1.3. Derive the induction principle for products ind A × B ,
+-- using only the projections and the propositional uniqueness principle uniq A × B .
+-- Verify that the definitional equalities are valid.
 -- Generalize uniq A × B to Σ-types, and do the same for Σ-types.
+
+indsigma (A : U) (B : A -> U) (C: ((x : A) * B x) -> U)
+         (g : (a : A) -> (b : B a) -> C (a,b))
+         (p : (x : A) * B x)
+         : C p = g p.1 p.2
+
+indsigmabeta (A : U) (B : A -> U) (C: ((x : A) * B x) -> U)
+           (g : (a : A) -> (b : B a) -> C (a,b))
+           (p : (x : A) * B x)
+           : PathP (<_> C p) (indsigma A B C g p) (g p.1 p.2)
+           = <i> g p.1 p.2
+
+-- Exercise 1.4. Assuming as given only the iterator for natural numbers
+-- derive a function having the type of the recursor rec N .
+-- Show that the defining equations of the
+-- recursor hold propositionally for this function,
+-- using the induction principle for N.
+
+data nat = zero | succ (n : nat)
+data x (A B : U) = tuple (a : A) (b : B)
+snd (A B : U) : (x A B) -> B = split tuple _ b -> b
+
+iter (C : U) (c0 : C) (cs : C -> C) : nat -> C = split
+     zero -> c0
+     succ n -> cs (iter C c0 cs n)
+
+recN (C : U) (c0 : C) (cs : nat -> C -> C) : nat -> C = split
+     zero -> c0
+     succ n -> cs n (recN C c0 cs n)
+
+recN' (C : U) (c0 : C) (cs : nat -> C -> C) (n : nat) : C =
+      snd nat C (iter (x nat C) c0' cs' n) where
+      c0' : (x nat C) = tuple zero c0
+      cs' : (x nat C) -> (x nat C)
+          = split tuple n' c -> tuple (succ n') (cs n' c)
+
+indN (C : nat -> U) (c0 : C zero)
+     (cs : (n : nat) -> C n -> C (succ n))
+     : (n : nat) -> C n = split
+     zero -> c0
+     succ n -> cs n (indN C c0 cs n)
+
+
+
