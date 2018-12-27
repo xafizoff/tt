@@ -28,6 +28,9 @@ module ch01 where
       zero : ℕ
       succ : ℕ → ℕ
 
+    subst : {A : Set} (C : A → Set) {x y : A} → x ≡ y → C x → C y
+    subst C refl cₓ = cₓ
+
   module ex01 where
 
     open defs
@@ -40,13 +43,13 @@ module ch01 where
     open defs
 
     rec-× : {A B C : Set} -> (A → B → C) → A × B → C
-    rec-× g (a , b) = g a b
+    rec-× g p = g (pr₁ p) (pr₂ p)
 
     rec-×-β : {A B C : Set} -> (a : A)(b : B)(g : A → B → C) → rec-× g (a , b) ≡ g a b
     rec-×-β a b g = refl
 
     rec-Σ : {A C : Set}{B : A → Set} → ((a : A) → B a → C) → Σ A B → C
-    rec-Σ g (a , b) = g a b
+    rec-Σ g p = g (π₁ p) (π₂ p)
 
     rec-Σ-β : {A C : Set}{B : A → Set} → (a : A)(b : B a)(g : (a : A) → B a → C) → rec-Σ g (a , b) ≡ g a b
     rec-Σ-β a b g = refl
@@ -57,9 +60,6 @@ module ch01 where
 
     uniq-× : {A B : Set} → (p : A × B) → (pr₁ p , pr₂ p) ≡ p
     uniq-× (a , b) = refl
-
-    subst : {A : Set} (C : A → Set) {x y : A} → x ≡ y → C x → C y
-    subst C refl cₓ = cₓ
 
     ind-× : {A B : Set} → (C : A × B → Set) → ((a : A)(b : B) → C (a , b)) → (p : A × B) → C p
     ind-× C g p = subst C (uniq-× p) (g (pr₁ p) (pr₂ p))
@@ -86,21 +86,19 @@ module ch01 where
     iter c₀ cₛ zero = c₀
     iter c₀ cₛ (succ n) = cₛ (iter c₀ cₛ n)
 
+    cₛ' : {C : Set} → (ℕ → C → C) → ℕ × C → ℕ × C
+    cₛ' cₛ (n , c) = (succ n , cₛ n c)
+
     rec-iter : {C : Set} → C → (ℕ → C → C) → ℕ → C
-    rec-iter {C} c₀ cₛ n = pr₂ (iter c₀' cₛ' n)
+    rec-iter {C} c₀ cₛ n = pr₂ (iter (zero , c₀) (cₛ' cₛ) n)
+
+    rec-holds : (C : Set)(c₀ : C)(cₛ : ℕ → C → C)(n : ℕ) → rec c₀ cₛ n ≡ rec-iter c₀ cₛ n
+    rec-holds C c₀ cₛ zero = refl
+    rec-holds C c₀ cₛ (succ n) = step₁ C c₀ cₛ n
       where
-        c₀' : ℕ × C
-        c₀' = zero , c₀
+        step₂ : (C : Set)(c₀ : C)(cₛ : ℕ → C → C)(n : ℕ) → (cₛ (succ n) (rec c₀ cₛ (succ n))) ≡ pr₂ ((cₛ' cₛ) (iter (zero , c₀) (cₛ' cₛ) (succ n)))
+        step₂ C c₀ cₛ n = ?
 
-        cₛ' : ℕ × C → ℕ × C
-        cₛ' (n , c) = (succ n , cₛ n c)
-
-    ff : (C' : Set)(c₀ : C')(cₛ : ℕ → C' → C') → ℕ → ℕ × C'
-    ff C' c₀ cₛ n = ind {C} (zero , c₀) (λ n → λ q → (succ (pr₁ q) , cₛ (succ (pr₁ q)) (pr₂ q))) n
-      where
-        C : ℕ → Set
-        C _ = ℕ × C'
-
-    -- rec-holds : (C : Set) → (c₀ : C) → (cₛ : ℕ → C → C) → (n : ℕ) → rec {C} c₀ cₛ n ≡ rec-iter {C} c₀ cₛ n
-    -- rec-holds C c0 cs zero = refl
-    -- rec-holds C c0 cs (succ n) = refl rec-iter {C} c0 cs n
+        step₁ : (C : Set)(c₀ : C)(cₛ : ℕ → C → C)(n : ℕ) → (cₛ n (rec c₀ cₛ n)) ≡ pr₂ ((cₛ' cₛ) (iter (zero , c₀) (cₛ' cₛ) n))
+        step₁ C c₀ cₛ zero = refl
+        step₁ C c₀ cₛ (succ n) = step₂ C c₀ cₛ n
