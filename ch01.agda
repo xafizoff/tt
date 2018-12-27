@@ -40,9 +40,8 @@ module ch01 where
     subst C refl cₓ = cₓ
 
     cong :
-      {l l' : Level}
-      {A : Set l}
-      {B : Set l'}
+      {A : Set}
+      {B : Set}
       (f : A → B)
       {x y : A}
       (p : x ≡ y)
@@ -119,5 +118,5 @@ module ch01 where
       rec-zero : rec-iter zero ≡ c₀
       rec-zero = refl
 
-      rec-holds : (n : ℕ) → rec-iter (succ n) ≡ cₛ n (rec-iter n)
-      rec-holds n = cong (λ x → cₛ x (rec-iter n)) (rec'-id n)
+      rec-succ : (n : ℕ) → rec-iter (succ n) ≡ cₛ n (rec-iter n)
+      rec-succ n = cong (λ x → cₛ x (rec-iter n)) (rec'-id n)
