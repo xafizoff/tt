@@ -1,0 +1,62 @@
+module scrap where
+
+data bool = true | false
+data nat = z | s (n : nat)
+
+Family (A: U): U = A -> U
+
+const (A B: U) : Family A = \(a : A) -> B
+
+data X (A B : U) = pair (a : A) (b : B)
+
+pr1 (A B : U) : X A B -> A = split pair a b -> a
+pr2 (A B : U) : X A B -> B = split pair a b -> b
+
+-- rec_AxB: recursor of product type: non-depended eliminator
+rec_AxB (A B C : U) (g : A -> B -> C) : (p: X A B) -> C = split pair a b -> g a b
+
+--uncurry = rec_AxB
+
+pr1' (A B : U) : X A B -> A = rec_AxB A B A (\(a : A) -> \(b : B) -> a)
+pr2' (A B : U) : X A B -> B = rec_AxB A B B (\(a : A) -> \(b : B) -> b)
+
+-- (dependend) eliminator
+ind_AxB (A B : U) (C : (X A B) -> U) (g : (a:A) -> (b:B) -> C (pair a b)) : (p: X A B) -> C p = split pair a b -> g a b
+
+
+-----------------
+-- isaev hott 3-4
+
+funExt (A B : U) (f g : A -> B)
+       (p : (x : A) -> Path B (f x) (g x)) :
+       Path (A -> B) f g = <i> \(a : A) -> (p a) @ i
+
+isProp (A : U) : U = (a a': A) -> PathP (<_> A) a a'
+-- pp : (A : U) -> isProp (isProp A) = (f g : isProp A) -> funExt 
+
+-----------------
+
+-----------------
+-- Functors
+-----------------
+
+Path (A : U) (a b : A) : U = PathP (<_> A) a b
+
+o (A B C : U) (f : A -> B) (g : B -> C) : A -> C =
+  \(x : A) -> g (f x)
+
+idfun (A : U) : A -> A = \(a : A) -> a
+
+-- g o h = k o f   g : A -> B, h : B -> C, k : A -> B', f : B' -> C
+-- fmap h : F B -> F C, fmap k : F A -> F B', $map g : F A -> F B, $map f : F B' -> F C
+free1 (A B B' C : U) (g : A -> B) (h : B -> C) (k : A -> B') (f : B' -> C) (F : U -> U) (fmap : (C1 C2 : U) -> (C1 -> C2) -> (F C1 -> F C2))
+      (p : Path (A -> C) (o A B C g h) (o A B' C k f)) :
+      (nmap : (C1 C2 : U) -> (C1 -> C2) -> (F C1 -> F C2)) * (Path (F A -> F C) (o (F A) (F B) (F C) (nmap A B g) (fmap B C h)) (o (F A) (F B') (F C) (fmap A B' k) (nmap B' C f)))
+      = undefined
+-- forall a : A. fmap idA x = idFA x => fmap (f o g) = fmap f o fmap g
+free (A B C : U) (F : U -> U) (fmap : (C1 C2 : U) -> (C1 -> C2) -> (F C1 -> F C2))
+     (p : Path (F A -> F A) (fmap A A (idfun A)) (idfun (F A))) :
+     ((f : A -> B) -> (g : B -> C) -> Path (F A -> F C) (fmap A C (o A B C f g)) (o (F A) (F B) (F C) (fmap A B f) (fmap B C g)))
+     = undefined
+
+-----------------
