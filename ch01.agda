@@ -97,7 +97,8 @@ module ch01 where
     rec-holds C c₀ cₛ (succ n) = step₁ C c₀ cₛ n
       where
         step₂ : (C : Set)(c₀ : C)(cₛ : ℕ → C → C)(n : ℕ) → (cₛ (succ n) (rec c₀ cₛ (succ n))) ≡ pr₂ ((cₛ' cₛ) (iter (zero , c₀) (cₛ' cₛ) (succ n)))
-        step₂ C c₀ cₛ n = ?
+        step₂ C c₀ cₛ zero = refl
+        step₂ C c₀ cₛ (succ n) = {!!}
 
         step₁ : (C : Set)(c₀ : C)(cₛ : ℕ → C → C)(n : ℕ) → (cₛ n (rec c₀ cₛ n)) ≡ pr₂ ((cₛ' cₛ) (iter (zero , c₀) (cₛ' cₛ) n))
         step₁ C c₀ cₛ zero = refl
