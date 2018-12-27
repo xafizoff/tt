@@ -44,21 +44,12 @@ indsigmabeta (A : U) (B : A -> U) (C: ((x : A) * B x) -> U)
 
 data nat = zero | succ (n : nat)
 data x (A B : U) = tuple (a : A) (b : B)
+fst (A B : U) : (x A B) -> A = split tuple a _ -> a
 snd (A B : U) : (x A B) -> B = split tuple _ b -> b
-
-iter (C : U) (c0 : C) (cs : C -> C) : nat -> C = split
-     zero -> c0
-     succ n -> cs (iter C c0 cs n)
 
 recN (C : U) (c0 : C) (cs : nat -> C -> C) : nat -> C = split
      zero -> c0
      succ n -> cs n (recN C c0 cs n)
-
-recN' (C : U) (c0 : C) (cs : nat -> C -> C) (n : nat) : C =
-      snd nat C (iter (x nat C) c0' cs' n) where
-      c0' : (x nat C) = tuple zero c0
-      cs' : (x nat C) -> (x nat C)
-          = split tuple n' c -> tuple (succ n') (cs n' c)
 
 indN (C : nat -> U) (c0 : C zero)
      (cs : (n : nat) -> C n -> C (succ n))
@@ -66,5 +57,21 @@ indN (C : nat -> U) (c0 : C zero)
      zero -> c0
      succ n -> cs n (indN C c0 cs n)
 
+iter (C : U) (c0 : C) (cs : C -> C) : nat -> C = split
+     zero -> c0
+     succ n -> cs (iter C c0 cs n)
 
+frecN (C : U) (c0 : C) (cs : nat -> C -> C) (n : nat) : C =
+      snd nat C (iter (x nat C) c0' cs' n) where
+      c0' : (x nat C) = tuple zero c0
+      cs' : (x nat C) -> (x nat C)
+          = split tuple n' c -> tuple (succ n') (cs n' c)
+
+P (C : U) (n : nat) : U = x nat C
+
+ex1_4_1 (C' : U) (c0 : C') (cs : nat -> C' -> C') (n : nat) : x nat C' =
+        indN C (tuple zero c0)
+        (\(n : nat) -> \(q : C n) -> tuple (succ (fst q)) (cs (fst q) (snd q))) n
+        where
+          C : nat -> U = P C'
 
