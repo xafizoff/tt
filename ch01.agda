@@ -1,8 +1,16 @@
-{-# OPTIONS --cubical --safe #-}
+{-# OPTIONS --without-K --safe #-}
 
 module ch01 where
 
   open import Agda.Builtin.Equality
+  open import Agda.Primitive
+  -- open import Agda.Builtin.Cubical.Path public
+  -- open import Agda.Primitive public using ( Level ; _⊔_ ; Setω )
+
+  -- variable ℓ : Level
+
+  -- refl : {A : Set ℓ} (x : A) → x ≡ x
+  -- refl x = λ _ → x
 
   module defs where
 
@@ -30,6 +38,17 @@ module ch01 where
 
     subst : {A : Set} (C : A → Set) {x y : A} → x ≡ y → C x → C y
     subst C refl cₓ = cₓ
+
+    cong :
+      {l l' : Level}
+      {A : Set l}
+      {B : Set l'}
+      (f : A → B)
+      {x y : A}
+      (p : x ≡ y)
+      → -----------
+      f x ≡ f y
+    cong _ refl = refl
 
   module ex01 where
 
@@ -74,32 +93,31 @@ module ch01 where
 
     open defs
 
-    rec : {C : Set} → C → (ℕ → C → C) → ℕ → C
-    rec c₀ cₛ zero = c₀
-    rec c₀ cₛ (succ n) = cₛ n (rec c₀ cₛ n)
-
-    ind : {C : ℕ → Set} → C zero → ((n : ℕ) → C n → C (succ n)) → ((n : ℕ) → C n)
-    ind c₀ cₛ zero = c₀
-    ind c₀ cₛ (succ n) = cₛ n (ind c₀ cₛ n)
-
     iter : {C : Set} → C → (C → C) → ℕ → C
     iter c₀ cₛ zero = c₀
     iter c₀ cₛ (succ n) = cₛ (iter c₀ cₛ n)
 
-    cₛ' : {C : Set} → (ℕ → C → C) → ℕ × C → ℕ × C
-    cₛ' cₛ (n , c) = (succ n , cₛ n c)
+    module _ {C : Set} (c₀ : C) (cₛ : ℕ → C → C) where
 
-    rec-iter : {C : Set} → C → (ℕ → C → C) → ℕ → C
-    rec-iter {C} c₀ cₛ n = pr₂ (iter (zero , c₀) (cₛ' cₛ) n)
+      rec : ℕ → C
+      rec zero = c₀
+      rec (succ n) = cₛ n (rec n)
 
-    rec-holds : (C : Set)(c₀ : C)(cₛ : ℕ → C → C)(n : ℕ) → rec c₀ cₛ n ≡ rec-iter c₀ cₛ n
-    rec-holds C c₀ cₛ zero = refl
-    rec-holds C c₀ cₛ (succ n) = step₁ C c₀ cₛ n
-      where
-        step₂ : (C : Set)(c₀ : C)(cₛ : ℕ → C → C)(n : ℕ) → (cₛ (succ n) (rec c₀ cₛ (succ n))) ≡ pr₂ ((cₛ' cₛ) (iter (zero , c₀) (cₛ' cₛ) (succ n)))
-        step₂ C c₀ cₛ zero = refl
-        step₂ C c₀ cₛ (succ n) = {!!}
+      cₛ' : ℕ × C → ℕ × C
+      cₛ' p = (succ (pr₁ p) , cₛ (pr₁ p) (pr₂ p))
 
-        step₁ : (C : Set)(c₀ : C)(cₛ : ℕ → C → C)(n : ℕ) → (cₛ n (rec c₀ cₛ n)) ≡ pr₂ ((cₛ' cₛ) (iter (zero , c₀) (cₛ' cₛ) n))
-        step₁ C c₀ cₛ zero = refl
-        step₁ C c₀ cₛ (succ n) = step₂ C c₀ cₛ n
+      rec' : ℕ → ℕ × C
+      rec' n = iter (zero , c₀) cₛ' n
+
+      rec'-id : (n : ℕ) → pr₁ (rec' n) ≡ n
+      rec'-id zero = refl
+      rec'-id (succ n) = cong succ (rec'-id n)
+
+      rec-iter : ℕ → C
+      rec-iter n = pr₂ (rec' n)
+
+      rec-zero : rec-iter zero ≡ c₀
+      rec-zero = refl
+
+      rec-holds : (n : ℕ) → rec-iter (succ n) ≡ cₛ n (rec-iter n)
+      rec-holds n = cong (λ x → cₛ x (rec-iter n)) (rec'-id n)
