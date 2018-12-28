@@ -56,15 +56,11 @@ iter (C : U) (c0 : C) (cs : C -> C) : Nat -> C = split
 
 recN'' (C : Nat -> U) (c0 : C zero) (cs : (n : Nat) -> C n -> C (succ n)) (n : Nat)
        : (x : Nat) * C x
-       = iter ((x : Nat) * C x) c0' cs' n where
+       = iter ((x : Nat) * C x) c0' cs' n
+       where
        c0' : (x : Nat) * C x = (zero, c0)
        cs' : ((x : Nat) * C x) -> ((x : Nat) * C x)
            = \(p : (x : Nat) * C x) -> (succ p.1, cs p.1 p.2)
-
-recN''_id (C : Nat -> U) (c0 : C zero) (cs : (n : Nat) -> C n -> C (succ n))
-          : (n : Nat) -> PathP (<_> Nat) (recN'' C c0 cs n).1 n = split
-          zero -> <i> zero
-          succ n -> <i> succ ((recN''_id C c0 cs n) @ i)
 
 recN' (C : U) (c0 : C) (cs : Nat -> C -> C) (n : Nat) : C = (recN'' (const Nat C) c0 cs n).2
 
@@ -72,5 +68,9 @@ rec_zero (C : U) (c0 : C) (cs : Nat -> C -> C) : PathP (<_> C) (recN' C c0 cs ze
 
 rec_succ (C : U) (c0 : C) (cs : Nat -> C -> C) (n : Nat)
          : PathP (<_> C) (recN' C c0 cs (succ n)) (cs n (recN' C c0 cs n))
-         = <i> help ((recN''_id (const Nat C) c0 cs n) @ i) where
-         help (x : Nat) : C = cs x (recN' C c0 cs n)
+         = <i> step2 ((step1 n) @ i)
+         where
+         step1 : (n : Nat) -> PathP (<_> Nat) (recN'' (const Nat C) c0 cs n).1 n = split
+                 zero -> <i> zero
+                 succ n -> <i> succ ((step1 n) @ i)
+         step2 (x : Nat) : C = cs x (recN' C c0 cs n)
