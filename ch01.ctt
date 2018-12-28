@@ -42,36 +42,35 @@ indsigmabeta (A : U) (B : A -> U) (C: ((x : A) * B x) -> U)
 -- recursor hold propositionally for this function,
 -- using the induction principle for N.
 
-data nat = zero | succ (n : nat)
-data x (A B : U) = tuple (a : A) (b : B)
-fst (A B : U) : (x A B) -> A = split tuple a _ -> a
-snd (A B : U) : (x A B) -> B = split tuple _ b -> b
+data Nat = zero | succ (n : Nat)
 
-recN (C : U) (c0 : C) (cs : nat -> C -> C) : nat -> C = split
+const (A B: U) (a: A) : U = B
+
+recN (C : U) (c0 : C) (cs : Nat -> C -> C) : Nat -> C = split
      zero -> c0
      succ n -> cs n (recN C c0 cs n)
 
-indN (C : nat -> U) (c0 : C zero)
-     (cs : (n : nat) -> C n -> C (succ n))
-     : (n : nat) -> C n = split
-     zero -> c0
-     succ n -> cs n (indN C c0 cs n)
-
-iter (C : U) (c0 : C) (cs : C -> C) : nat -> C = split
+iter (C : U) (c0 : C) (cs : C -> C) : Nat -> C = split
      zero -> c0
      succ n -> cs (iter C c0 cs n)
 
-frecN (C : U) (c0 : C) (cs : nat -> C -> C) (n : nat) : C =
-      snd nat C (iter (x nat C) c0' cs' n) where
-      c0' : (x nat C) = tuple zero c0
-      cs' : (x nat C) -> (x nat C)
-          = split tuple n' c -> tuple (succ n') (cs n' c)
+recN'' (C : Nat -> U) (c0 : C zero) (cs : (n : Nat) -> C n -> C (succ n)) (n : Nat)
+       : (x : Nat) * C x
+       = iter ((x : Nat) * C x) c0' cs' n where
+       c0' : (x : Nat) * C x = (zero, c0)
+       cs' : ((x : Nat) * C x) -> ((x : Nat) * C x)
+           = \(p : (x : Nat) * C x) -> (succ p.1, cs p.1 p.2)
 
-P (C : U) (n : nat) : U = x nat C
+recN''_id (C : Nat -> U) (c0 : C zero) (cs : (n : Nat) -> C n -> C (succ n))
+          : (n : Nat) -> PathP (<_> Nat) (recN'' C c0 cs n).1 n = split
+          zero -> <i> zero
+          succ n -> <i> succ ((recN''_id C c0 cs n) @ i)
 
-ex1_4_1 (C' : U) (c0 : C') (cs : nat -> C' -> C') (n : nat) : x nat C' =
-        indN C (tuple zero c0)
-        (\(n : nat) -> \(q : C n) -> tuple (succ (fst q)) (cs (fst q) (snd q))) n
-        where
-          C : nat -> U = P C'
+recN' (C : U) (c0 : C) (cs : Nat -> C -> C) (n : Nat) : C = (recN'' (const Nat C) c0 cs n).2
 
+rec_zero (C : U) (c0 : C) (cs : Nat -> C -> C) : PathP (<_> C) (recN' C c0 cs zero) c0 = <i> c0
+
+rec_succ (C : U) (c0 : C) (cs : Nat -> C -> C) (n : Nat)
+         : PathP (<_> C) (recN' C c0 cs (succ n)) (cs n (recN' C c0 cs n))
+         = <i> help ((recN''_id (const Nat C) c0 cs n) @ i) where
+         help (x : Nat) : C = cs x (recN' C c0 cs n)
